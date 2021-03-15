@@ -80,17 +80,36 @@ func (p *Products) FindOne(ctx echo.Context) error {
 }
 
 func (p *Products) Update(ctx echo.Context) error {
-	var product models.Products
+	var form productForm
+	if err := ctx.Bind(&form); err != nil {
+		return ctx.JSON(http.StatusUnprocessableEntity, H{"error": err.Error()})
+	}
+	product, err := p.findProductByID(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, H{"error": err.Error()})
+	}
+
+	copier.Copy(&product, &form)
+
+	if err := p.DB.Save(&product).Error; err != nil {
+		return ctx.JSON(http.StatusUnprocessableEntity, H{"error": err.Error()})
+	}
+
+	p.setProductImage(ctx, product)
+
 	var serializedProduct productRespons
 	copier.Copy(&serializedProduct, &product)
 	return ctx.JSON(http.StatusOK, H{"product": serializedProduct})
 }
 
 func (p *Products) Delete(ctx echo.Context) error {
-	var product models.Products
-	var serializedProduct productRespons
-	copier.Copy(&serializedProduct, &product)
-	return ctx.JSON(http.StatusOK, H{"product": serializedProduct})
+	product, err := p.findProductByID(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, H{"error": err.Error()})
+	}
+
+	p.DB.Delete(&product)
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (p *Products) findProductByID(ctx echo.Context) (*models.Products, error) {
@@ -102,6 +121,27 @@ func (p *Products) findProductByID(ctx echo.Context) (*models.Products, error) {
 	}
 
 	return &product, nil
+}
+
+func (p *Products) SaveFile(file *multipart.FileHeader, path string) error {
+	// Source
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	// Destination
+	dst, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	// Copy
+	if _, err = io.Copy(dst, src); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Products) setProductImage(ctx echo.Context, product *models.Products) error {
@@ -117,22 +157,8 @@ func (p *Products) setProductImage(ctx echo.Context, product *models.Products) e
 
 	filename := path + "/" + file.Filename
 
-	// Source
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-	// Destination
-	dst, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	// Copy
-	if _, err = io.Copy(dst, src); err != nil {
-		return err
+	if err := p.SaveFile(file, filename); err != nil {
+		return ctx.JSON(http.StatusUnprocessableEntity, H{"error": err.Error()})
 	}
 
 	product.Image = os.Getenv("HOST") + "/" + filename
