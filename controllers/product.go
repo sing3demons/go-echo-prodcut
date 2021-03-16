@@ -33,17 +33,28 @@ type productRespons struct {
 	Image string `json:"image"`
 }
 
+type pagingRespons struct {
+	Items  []productRespons `json:"items"`
+	Paging *pagingResult    `json:"paging"`
+}
+
 //H - json formate
 type H map[string]interface{}
 
 func (p *Products) FindAll(ctx echo.Context) error {
-	var products []models.Products
+	products := []models.Products{}
 
-	p.DB.Find(&products)
+	pagination := pagination{
+		ctx:     ctx,
+		query:   p.DB,
+		records: &products,
+	}
+	paging := pagination.pagingResource()
+	// p.DB.Find(&products)
 
-	var serializedProducts []productRespons
+	serializedProducts := []productRespons{}
 	copier.Copy(&serializedProducts, &products)
-	return ctx.JSON(http.StatusOK, H{"products": serializedProducts})
+	return ctx.JSON(http.StatusOK, H{"products": pagingRespons{Items: serializedProducts, Paging: paging}})
 }
 
 //Create - inser product
