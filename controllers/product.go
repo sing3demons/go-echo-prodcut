@@ -14,6 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
+
+
 type Products struct {
 	DB *gorm.DB
 }

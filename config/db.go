@@ -15,6 +15,7 @@ func InitDB() {
 		panic("failed to connect database")
 	}
 	database.AutoMigrate(&models.Products{})
+	database.AutoMigrate(&models.User{})
 	// database.Migrator().DropTable(&models.Products{})
 
 	db = database
