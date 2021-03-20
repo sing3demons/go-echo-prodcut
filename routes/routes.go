@@ -10,15 +10,21 @@ import (
 func Serve(e *echo.Echo) {
 	db := config.GetDB()
 	v1 := e.Group("api/v1")
+	// jwtVerify := controllers.JwtVerify()
+	authenticate := controllers.Authorize()
 
 	authController := controllers.Auth{DB: db}
 	authGroup := v1.Group("/auth")
+
 	{
+		authGroup.GET("", authController.Profile, authenticate)
 		authGroup.POST("/sign-up", authController.SignUp)
+		authGroup.POST("/sign-in", authController.SignIn)
 	}
 
 	productController := controllers.Products{DB: db}
 	productGroup := v1.Group("/products")
+	productGroup.Use(authenticate)
 	{
 		productGroup.GET("", productController.FindAll)
 		productGroup.GET("/:id", productController.FindOne)

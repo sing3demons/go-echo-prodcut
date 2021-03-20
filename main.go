@@ -23,6 +23,8 @@ func main() {
 	config.InitDB()
 
 	e := echo.New()
+	// e.HideBanner = true
+	// e.HidePort = true
 	e.Static("/uploads", "./uploads")
 
 	e.GET("", homepage)

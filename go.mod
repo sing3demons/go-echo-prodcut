@@ -3,6 +3,8 @@ module app
 go 1.16
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1 // indirect
 	github.com/jinzhu/copier v0.2.8
 	github.com/joho/godotenv v1.3.0
 	github.com/labstack/echo/v4 v4.2.1
