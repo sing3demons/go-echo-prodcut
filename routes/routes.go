@@ -3,6 +3,7 @@ package routes
 import (
 	"app/config"
 	"app/controllers"
+	"app/middlewares"
 
 	"github.com/labstack/echo/v4"
 )
@@ -11,7 +12,7 @@ func Serve(e *echo.Echo) {
 	db := config.GetDB()
 	v1 := e.Group("api/v1")
 	// jwtVerify := controllers.JwtVerify()
-	authenticate := controllers.Authorize()
+	authenticate := middlewares.Authorize()
 
 	authController := controllers.Auth{DB: db}
 	authGroup := v1.Group("/auth")
@@ -19,7 +20,7 @@ func Serve(e *echo.Echo) {
 	{
 		authGroup.GET("", authController.Profile, authenticate)
 		authGroup.POST("/sign-up", authController.SignUp)
-		authGroup.POST("/sign-in", authController.SignIn)
+		authGroup.POST("/sign-in", middlewares.SignIn)
 	}
 
 	productController := controllers.Products{DB: db}

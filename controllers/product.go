@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-
+type H map[string]interface{}
 
 type Products struct {
 	DB *gorm.DB
@@ -41,7 +41,6 @@ type pagingRespons struct {
 }
 
 //H - json formate
-type H map[string]interface{}
 
 func (p *Products) FindAll(ctx echo.Context) error {
 	products := []models.Products{}
