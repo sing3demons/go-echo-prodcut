@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"app/config"
-	"app/models"
+	"github.com/sing3demons/go-echo-product/config"
+	"github.com/sing3demons/go-echo-product/models"
 	"fmt"
 	"net/http"
 	"os"

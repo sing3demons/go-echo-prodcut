@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"app/models"
+	"github.com/sing3demons/go-echo-product/models"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"

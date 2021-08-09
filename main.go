@@ -1,13 +1,14 @@
 package main
 
 import (
-	"app/config"
-	"app/routes"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/sing3demons/go-echo-product/config"
+	"github.com/sing3demons/go-echo-product/routes"
 
 	"net/http"
 )
@@ -23,9 +24,20 @@ func main() {
 	config.InitDB()
 
 	e := echo.New()
-	// e.HideBanner = true
-	// e.HidePort = true
+	e.HideBanner = true
 	e.Static("/uploads", "./uploads")
+
+	//middleware
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "[${time_rfc3339}] ${status} ${method} ${path} (${remote_ip}) ${latency_human}\n",
+		Output: e.Logger.Output(),
+	}))
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS()) // CORS default
+	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	// 	AllowOrigins: []string{"https://labstack.com", "https://labstack.net"},
+	// 	AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+	// })) // CORS restricted
 
 	e.GET("", homepage)
 	routes.Serve(e)
@@ -34,6 +46,7 @@ func main() {
 	for _, dir := range uploadDir {
 		os.MkdirAll("uploads/"+dir, 0755)
 	}
+
 	e.Logger.Fatal(e.Start(":" + os.Getenv("PORT")))
 }
 

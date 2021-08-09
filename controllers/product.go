@@ -1,13 +1,17 @@
 package controllers
 
 import (
-	"app/models"
+	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/sing3demons/go-echo-product/config"
+	"github.com/sing3demons/go-echo-product/models"
 
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
@@ -17,7 +21,8 @@ import (
 type H map[string]interface{}
 
 type Products struct {
-	DB *gorm.DB
+	DB    *gorm.DB
+	Cache config.RedisCache
 }
 
 type productForm struct {
@@ -43,7 +48,24 @@ type pagingRespons struct {
 //H - json formate
 
 func (p *Products) FindAll(ctx echo.Context) error {
-	products := []models.Products{}
+	// products := []models.Products{}
+
+	var products []models.Products = p.Cache.GetProduct("products")
+
+	if products != nil {
+		fmt.Println("Get...Redis")
+		products := p.Cache.GetProduct("products")
+		pagingCache := p.Cache.GetPage("paging")
+
+		var data *pagingResult
+		paging := fmt.Sprintf("%v", pagingCache)
+		json.Unmarshal([]byte(paging), &data)
+
+		serializedProducts := []productRespons{}
+		copier.Copy(&serializedProducts, &products)
+
+		return ctx.JSON(http.StatusOK, H{"products": pagingRespons{Items: serializedProducts, Paging: data}})
+	}
 
 	pagination := pagination{
 		ctx:     ctx,
@@ -55,6 +77,10 @@ func (p *Products) FindAll(ctx echo.Context) error {
 
 	serializedProducts := []productRespons{}
 	copier.Copy(&serializedProducts, &products)
+
+	p.Cache.Set("products", serializedProducts)
+	p.Cache.Set("paging", paging)
+
 	return ctx.JSON(http.StatusOK, H{"products": pagingRespons{Items: serializedProducts, Paging: paging}})
 }
 
@@ -75,7 +101,9 @@ func (p *Products) Create(ctx echo.Context) error {
 	p.setProductImage(ctx, &product)
 
 	var serializedProduct productRespons
+
 	copier.Copy(&serializedProduct, &product)
+
 	return ctx.JSON(http.StatusOK, H{"product": serializedProduct})
 }
 
@@ -88,6 +116,7 @@ func (p *Products) FindOne(ctx echo.Context) error {
 
 	var serializedProduct productRespons
 	copier.Copy(&serializedProduct, &product)
+
 	return ctx.JSON(http.StatusOK, H{"product": serializedProduct})
 }
 
