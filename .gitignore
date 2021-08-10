@@ -18,3 +18,4 @@
 .env
 tmp
 main_app
+db_data
