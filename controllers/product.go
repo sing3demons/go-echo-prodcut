@@ -50,11 +50,10 @@ type pagingRespons struct {
 func (p *Products) FindAll(ctx echo.Context) error {
 	// products := []models.Products{}
 
-	var products []models.Products = p.Cache.GetProduct("products")
+	cacheData := p.Cache.GetProduct("products")
 
-	if products != nil {
-		fmt.Println("Get...Redis")
-		products := p.Cache.GetProduct("products")
+	if cacheData != nil {
+		// products := p.Cache.GetProduct("products")
 		pagingCache := p.Cache.GetPage("paging")
 
 		var data *pagingResult
@@ -62,10 +61,12 @@ func (p *Products) FindAll(ctx echo.Context) error {
 		json.Unmarshal([]byte(paging), &data)
 
 		serializedProducts := []productRespons{}
-		copier.Copy(&serializedProducts, &products)
+		copier.Copy(&serializedProducts, &cacheData)
 
 		return ctx.JSON(http.StatusOK, H{"products": pagingRespons{Items: serializedProducts, Paging: data}})
 	}
+
+	var products []models.Products
 
 	pagination := pagination{
 		ctx:     ctx,
